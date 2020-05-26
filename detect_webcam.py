@@ -1,17 +1,12 @@
 import os
 import sys
-import random
-import math
 import numpy as np
-import skimage.io
-import matplotlib
-import matplotlib.pyplot as plt
-import ipdb
 import cv2
 from PIL import Image, ImageDraw
 import time
 from brakegate_config.gate_config import brakeCorpDict, brakeCheckDict
 from myutil import cleaningBoxes
+import configparser
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -84,27 +79,19 @@ class_names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
 # file_names = next(os.walk(IMAGE_DIR))[2]
 # image = skimage.io.imread(os.path.join(IMAGE_DIR, random.choice(file_names)))
 
-input_path = "E:/BaiduNetdiskDownload/2020-04-17/10.6.8.201_01_20200417215459669.mp4"
-# output_path = "./9669-video-out.mp4"
+input_path = 0
+evade_save_path = "D:/workspace/evade_save_path/"
 
-video_name = input_path[input_path.rindex("/") + 1: -4]
-base_path = os.path.join("C:/workspace/result/", video_name)
-if not os.path.exists(base_path):
-    os.makedirs(base_path)
+cf = configparser.ConfigParser()
+cf.read("./local.cfg")
+ip = cf.get("local", "ip")
+isShow = True if cf.get("local", "isShow") == "True" else False
+isOutput = True if cf.get("local", "isOutput") == "True" else False
 
-ip = str(video_name).split("_")[0]
-check_areas = brakeCheckDict[ip]  # 拿到该ip的摄像头的闸机开关校验区域坐标
-crops = brakeCorpDict[ip]  # 该ip下的闸机有效区域坐标
+check_areas = brakeCheckDict[str(ip)]  # 拿到该ip的摄像头的闸机开关校验区域坐标
+crops = brakeCorpDict[str(ip)]  # 该ip下的闸机有效区域坐标
 
 cap = cv2.VideoCapture(input_path)
-video_FourCC    = int(cap.get(cv2.CAP_PROP_FOURCC))
-video_fps       = cap.get(cv2.CAP_PROP_FPS)
-video_size      = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
-                    int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
-# isOutput = True if output_path != "" else False
-# if isOutput:
-#     print("!!! TYPE:", type(output_path), type(video_FourCC), type(video_fps), type(video_size))
-#     out = cv2.VideoWriter(output_path, video_FourCC, video_fps, video_size)
 
 count = 0
 
@@ -112,15 +99,15 @@ while True:
     ret, frame = cap.read()
     if frame is None:
         break
-    print("frame: ", type(frame))
+    # print("frame: ", type(frame))
     count += 1
     start = time.time()
-    print("count:", count)
+    # print("count:", count)
     results = model.detect([frame], verbose=1)
 
     # Visualize results
     r = results[0]
-    print(r['rois'], r['class_ids'])
+    # print(r['rois'], r['class_ids'])
 
     # r['rois']，为矩形框的坐标：y1, x1, y2, x2 = boxes[i]，range of interest
     # r['class_ids']，类别id
@@ -155,17 +142,17 @@ while True:
             draw.rectangle(
                 [left + i, top + i, right - i, bottom - i],
                 outline=color)
-        # draw.rectangle(
-        #     [tuple(text_origin), tuple(text_origin + label_size)],
-        #     fill=color)
-        # draw.text(text_origin, label, fill=(0, 0, 0), font=font)
-        del draw
+            del draw
 
     result = np.asarray(img)
-    # cv2.imshow("img", result)
-    # cv2.waitKey()
+    if isShow:
+        cv2.imshow("img", result)
+        cv2.waitKey(1)
+    if isOutput:
+        save_path = os.path.join(evade_save_path, ip)
+        if os.path.exists(save_path) is False:
+            os.makedirs(save_path)
+        cv2.imwrite(os.path.join(save_path, str(count) + "-" + str(int(time.time())) + ".jpg"), result)
 
-    # if isOutput:
-    #     out.write(result)
     print("===time===", time.time() - start)
 
