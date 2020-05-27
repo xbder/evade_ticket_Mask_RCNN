@@ -89,7 +89,7 @@ output_path = "./9669-out.mp4/"
 cap = cv2.VideoCapture(input_path)
 
 count = 0
-fo = open("./average_time.txt", 'w+', encoding='utf-8')
+# fo = open("./average_time.txt", 'w+', encoding='utf-8')
 for file in os.listdir(input_path):
     fullfile = os.path.join(input_path, file)
 
@@ -157,5 +157,5 @@ for file in os.listdir(input_path):
     # cv2.waitKey()
     cv2.imwrite(os.path.join(output_path, name), result)
     print("===time===", time.time() - start)
-    fo.write(fullfile + "\t" + str(time.time() - start) + "\n")
-    fo.flush()
+    # fo.write(fullfile + "\t" + str(time.time() - start) + "\n")
+    # fo.flush()

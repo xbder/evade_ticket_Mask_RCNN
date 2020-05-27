@@ -148,7 +148,7 @@ while True:
     if isShow:
         cv2.imshow("img", result)
         cv2.waitKey(1)
-    if isOutput:
+    if isOutput and len(taopiaoList) > 0:    # 只有存在逃票行为时才保存图片
         save_path = os.path.join(evade_save_path, ip)
         if os.path.exists(save_path) is False:
             os.makedirs(save_path)
