@@ -89,8 +89,20 @@ cf.read("./local.cfg")
 ip = cf.get("local", "ip")
 isShow = True if cf.get("local", "isShow") == "True" else False
 isOutput = True if cf.get("local", "isOutput") == "True" else False
-input_path = cf.get("local", "input_path") if cf.get("local", "input_path") != "0" else 0    # 从配置文件读取网络摄像头
-log = Logger(os.path.join('./logs/', ip + ".log"), level='info')
+ip = cf.get("target", "ip")
+input_path = cf.get("webcam", "input_path")
+
+ipArr = ip.split(",")
+inputArr = input_path.split(",")
+n = len(ipArr)
+
+capList = []
+loggerList = []
+for i in range(len(ipArr)):
+    dev = inputArr[i] if inputArr[i] != "0" else 0
+    capList.append(cv2.VideoCapture(dev))
+    # capList.append(cv2.VideoStream(dev))
+    loggerList.append(Logger(os.path.join('./logs/', ipArr[i] + ".log"), level='info'))
 
 check_areas = brakeCheckDict[str(ip)]  # 拿到该ip的摄像头的闸机开关校验区域坐标
 crops = brakeCorpDict[str(ip)]  # 该ip下的闸机有效区域坐标
