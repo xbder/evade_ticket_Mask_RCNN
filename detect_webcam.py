@@ -81,7 +81,7 @@ class_names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
 # image = skimage.io.imread(os.path.join(IMAGE_DIR, random.choice(file_names)))
 
 # input_path = 0
-input_path = "rtsp://admin:quickhigh123456@10.10.56.231"
+# input_path = "rtsp://admin:quickhigh123456@10.10.56.231"
 evade_save_path = "D:/workspace/evade_save_path/"
 
 cf = configparser.ConfigParser()
@@ -89,6 +89,7 @@ cf.read("./local.cfg")
 ip = cf.get("local", "ip")
 isShow = True if cf.get("local", "isShow") == "True" else False
 isOutput = True if cf.get("local", "isOutput") == "True" else False
+input_path = cf.get("local", "input_path") if cf.get("local", "input_path") != "0" else 0    # 从配置文件读取网络摄像头
 log = Logger(os.path.join('./logs/', ip + ".log"), level='info')
 
 check_areas = brakeCheckDict[str(ip)]  # 拿到该ip的摄像头的闸机开关校验区域坐标
