@@ -21,6 +21,7 @@ from mrcnn import utils
 import mrcnn.model as modellib
 from mrcnn import visualize
 from myutil import save_instances, getShortestDistance
+from Logger import *
 
 # Import COCO config
 sys.path.append(os.path.join(ROOT_DIR, "samples/coco/"))  # To find local version
@@ -79,7 +80,8 @@ class_names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
 # file_names = next(os.walk(IMAGE_DIR))[2]
 # image = skimage.io.imread(os.path.join(IMAGE_DIR, random.choice(file_names)))
 
-input_path = 0
+# input_path = 0
+input_path = "rtsp://admin:quickhigh123456@10.10.56.231"
 evade_save_path = "D:/workspace/evade_save_path/"
 
 cf = configparser.ConfigParser()
@@ -87,11 +89,14 @@ cf.read("./local.cfg")
 ip = cf.get("local", "ip")
 isShow = True if cf.get("local", "isShow") == "True" else False
 isOutput = True if cf.get("local", "isOutput") == "True" else False
+log = Logger(os.path.join('./logs/', ip + ".log"), level='info')
 
 check_areas = brakeCheckDict[str(ip)]  # 拿到该ip的摄像头的闸机开关校验区域坐标
 crops = brakeCorpDict[str(ip)]  # 该ip下的闸机有效区域坐标
 
 cap = cv2.VideoCapture(input_path)
+if not cap.isOpened():
+    raise IOError("Couldn't open webcam or video")
 
 count = 0
 
@@ -152,7 +157,10 @@ while True:
         save_path = os.path.join(evade_save_path, ip)
         if os.path.exists(save_path) is False:
             os.makedirs(save_path)
-        cv2.imwrite(os.path.join(save_path, str(count) + "-" + str(int(time.time())) + ".jpg"), result)
-
-    print("===time===", time.time() - start)
+        savefile = os.path.join(save_path, str(count) + "-" + str(int(time.time())) + ".jpg")
+        cv2.imwrite(savefile, result)
+        log.logger.info("%s %s %s %s" % (str(count), savefile, taopiaoList, str(time.time() - start)))
+    else:
+        log.logger.info("%s %s" % (str(count), str(time.time() - start)))
+    # print("===time===", time.time() - start)
 
