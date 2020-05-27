@@ -60,3 +60,4 @@ ENV/
 input*/
 *-out.mp4/
 *.spec
+*.mp4
