@@ -47,6 +47,9 @@ count = 0
 while True:
     for i in range(len(capList)):
         try:
+            # 这样做生产上会出问题，报错：h264报错：error while decoding MB 71 2, bytestream -7
+            # 原因：cap.read()数据积压，导致缓冲区爆掉
+            # 解决办法：目前cv2没有提供对其缓冲器操作的api，
             cap = capList[i]
             ret, frame = cap.read()
             if frame is None:
