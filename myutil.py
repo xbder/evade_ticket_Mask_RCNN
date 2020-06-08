@@ -117,6 +117,7 @@ def cleaningBoxes(boxes):
             iou4small, biggerbox, smallerbox = getiou4small(box1, box2)    # iou对于小者的比例，大框，小框
             print("iou4small", iou4small, biggerbox, smallerbox)
             if iou4small == 1.0:    # 过滤掉本身
+                finalboxes.append(biggerbox)
                 continue
             if iou4small > iou4small_threshold:    # 如果交集占小框的面积超过阀值，则只保留大框
                 finalboxes.append(biggerbox)

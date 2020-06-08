@@ -58,12 +58,13 @@ def isin(center, cropAreaList):
 
 count = 0
 personNumsDict = {}
+final_total = 0
 while True:
     time.sleep(0.5)
     for i in range(len(inputArr)):
         try:
             ip = ipArr[i]
-            cropAreaList = brakeCorpDict[i]    # 每个闸机下有效位置
+            cropAreaList = brakeCorpDict[ip]    # 每个闸机下有效位置
 
             t1 = time.time()
             # cap = capList[i]
@@ -109,8 +110,11 @@ while True:
             # print("personList: ", personList)
             afterCleanList = cleaningBoxes(personList)  # boxes清洗：area<阀值 && iou4small>0.45
             # print("afterCleanList:", afterCleanList)
-            for cleaned_person in afterCleanList:
-                top, left, bottom, right = cleaned_person
+            log.logger.info("afterCleanList: %s" % afterCleanList)
+            final_total += len(afterCleanList)    # 累加人数
+            log.logger.info("****** final total: %s" % (final_total))
+            for per_person in afterCleanList:
+                top, left, bottom, right = per_person
                 w = right - left
                 h = bottom - top
                 center = (left + w / 2, top + h / 2)
@@ -146,16 +150,17 @@ while True:
             if isShow:
                 cv2.imshow("img", result)
                 cv2.waitKey(1)
-            if isOutput and len(taopiaoList) > 0:  # 只有存在逃票行为时才保存图片
+            if isOutput: #  and len(taopiaoList) > 0:  # 只有存在逃票行为时才保存图片
                 save_path = os.path.join(evade_save_path, ipArr[i])
                 if os.path.exists(save_path) is False:
                     os.makedirs(save_path)
                 savefile = os.path.join(save_path, str(count) + "-" + str(int(time.time())) + ".jpg")
                 cv2.imwrite(savefile, result)
-                log.logger.info("%s %s %s read: %s, detect: %s %s" % (
-                str(count), savefile, taopiaoList, str(read_time), str(time.time() - start), personNumsDict))
+
+                log.logger.info("%s %s %s read: %s, detect: %s total: %d details: %s" % (
+                str(count), savefile, taopiaoList, str(read_time), str(time.time() - start), final_total, personNumsDict))
             else:
-                log.logger.info("%s read: %s, detect: %s %s" % (str(count), str(read_time), str(time.time() - start), personNumsDict))
+                log.logger.info("%s read: %s, detect: %s total: %d details: %s" % (str(count), str(read_time), str(time.time() - start), final_total, personNumsDict))
 
             cap.release()
             cv2.destroyAllWindows()
