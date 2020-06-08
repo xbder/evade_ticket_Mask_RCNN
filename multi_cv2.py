@@ -29,33 +29,62 @@ n = len(ipArr)
 capList = []
 loggerList = []
 errorlog = Logger(os.path.join('./logs/error.log'), level='info')
-for i in range(len(ipArr)):
-    dev = inputArr[i] if inputArr[i] != "0" else 0
-    capList.append(cv2.VideoCapture(dev))
-    # capList.append(cv2.VideoStream(dev))
-    loggerList.append(Logger(os.path.join('./logs/', ipArr[i] + ".log"), level='info'))
+# for i in range(len(ipArr)):
+#     t1 = time.time()
+#     dev = inputArr[i] if inputArr[i] != "0" else 0
+#     capList.append(cv2.VideoCapture(dev))
+#     # capList.append(cv2.VideoStream(dev))
+#     loggerList.append(Logger(os.path.join('./logs/', ipArr[i] + ".log"), level='info'))
+#     errorlog.logger.info("已连接 %s webcam, dev: %s, 耗时 %s" % (str(ipArr[i]), dev, (time.time() - t1)))
 
 # for cap in capList:
 #     print(cap)
 #     print()
 
-for i in range(len(capList)):
-    print(capList[i])
-    print(loggerList[i])
+# for i in range(len(capList)):
+#     print(capList[i])
+#     print(loggerList[i])
+
+'''
+    判断点在哪个矩形框内，返回点所在的框的序号
+'''
+def isin(center, cropAreaList):
+    for i in range(len(cropAreaList)):
+        left, top, right, bottom = cropAreaList[i]    # 左上右下
+        (targetx, targety) = center
+
+        if (targetx > left and targetx < right) and (targety > top and targety < bottom):
+            return str(i)
 
 count = 0
+personNumsDict = {}
 while True:
-    for i in range(len(capList)):
+    time.sleep(0.5)
+    for i in range(len(inputArr)):
         try:
-            # 这样做生产上会出问题，报错：h264报错：error while decoding MB 71 2, bytestream -7
-            # 原因：cap.read()数据积压，导致缓冲区爆掉
-            # 解决办法：目前cv2没有提供对其缓冲器操作的api，
-            cap = capList[i]
+            ip = ipArr[i]
+            cropAreaList = brakeCorpDict[i]    # 每个闸机下有效位置
+
+            t1 = time.time()
+            # cap = capList[i]
+            dev = inputArr[i] if inputArr[i] != "0" else 0
+            cap = cv2.VideoCapture(dev)
+            log = Logger(os.path.join('./logs/', ipArr[i] + ".log"), level='info')
+            errorlog.logger.info("已连接 %s webcam, dev: %s, 耗时 %s" % (str(ipArr[i]), dev, (time.time() - t1)))
+
+            # if cap.isOpened() is False:
+            #     continue
+
+            t2 = time.time()
             ret, frame = cap.read()
             if frame is None:
                 break
-            # print("frame: ", type(frame))
+            print("frame: ", type(frame))
+            read_time = time.time() - t2
             count += 1
+            # if count % 30 != 0:
+            #     continue
+
             start = time.time()
             # print("count:", count)
             results = model.detect([frame], verbose=1)
@@ -80,6 +109,20 @@ while True:
             # print("personList: ", personList)
             afterCleanList = cleaningBoxes(personList)  # boxes清洗：area<阀值 && iou4small>0.45
             # print("afterCleanList:", afterCleanList)
+            for cleaned_person in afterCleanList:
+                top, left, bottom, right = cleaned_person
+                w = right - left
+                h = bottom - top
+                center = (left + w / 2, top + h / 2)
+
+                brake_num = isin(center, cropAreaList)    # 判断中心点在哪个区域内
+
+                if brake_num in personNumsDict.keys():
+                    tmp_nums = personNumsDict[brake_num]
+                    personNumsDict[brake_num] = tmp_nums + 1
+                else:
+                    personNumsDict[brake_num] = 1
+
             taopiaoList = getShortestDistance("", count, afterCleanList, None, None)  # 计算欧式距离，判断逃票
             img = Image.fromarray(frame.astype('uint8'))  # numpy.ndarray 转PIL
             thickness = 3
@@ -109,9 +152,13 @@ while True:
                     os.makedirs(save_path)
                 savefile = os.path.join(save_path, str(count) + "-" + str(int(time.time())) + ".jpg")
                 cv2.imwrite(savefile, result)
-                loggerList[i].logger.info("%s %s %s %s" % (str(count), savefile, taopiaoList, str(time.time() - start)))
+                log.logger.info("%s %s %s read: %s, detect: %s %s" % (
+                str(count), savefile, taopiaoList, str(read_time), str(time.time() - start), personNumsDict))
             else:
-                loggerList[i].logger.info("%s %s" % (str(count), str(time.time() - start)))
+                log.logger.info("%s read: %s, detect: %s %s" % (str(count), str(read_time), str(time.time() - start), personNumsDict))
+
+            cap.release()
+            cv2.destroyAllWindows()
         except Exception as e:
             errorlog.logger.error(traceback.format_exc())
 

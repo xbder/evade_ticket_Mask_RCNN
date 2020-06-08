@@ -7,3 +7,7 @@ from torchvision.models.resnet import BasicBlock, _resnet
 # 也可以这样导入网络，第一个参数为网络名称
 net18= _resnet('resnet18', BasicBlock, [2, 2, 2, 2], pretrained=True, progress=True)
 print(net18)
+
+
+dict = {}
+
