@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 from PIL import Image, ImageDraw
 import time
-from brakegate_config.gate_config import brakeCorpDict, brakeCheckDict
+from brakegate_config.gate_config import brakeCorpDict, brakeCheckDict, brakeDirectDict
 from myutil import cleaningBoxes, getShortestDistance
 import configparser
 from Logger import *
@@ -12,6 +12,7 @@ from detect_util import model
 import traceback
 
 evade_save_path = "D:/workspace/evade_save_path/"
+normal_save_path = "D:/workspace/normal_save_path/"
 cf = configparser.ConfigParser()
 cf.read("./local.cfg")
 # ip = cf.get("local", "ip")
@@ -65,6 +66,7 @@ while True:
         try:
             ip = ipArr[i]
             cropAreaList = brakeCorpDict[ip]    # 每个闸机下有效位置
+            direct = brakeDirectDict[ip]    # ip对应闸机的方向
 
             t1 = time.time()
             # cap = capList[i]
@@ -113,6 +115,8 @@ while True:
             log.logger.info("afterCleanList: %s" % afterCleanList)
             final_total += len(afterCleanList)    # 累加人数
             log.logger.info("****** final total: %s" % (final_total))
+
+            person_details_list = []    # 每个人详细信息的列表
             for per_person in afterCleanList:
                 top, left, bottom, right = per_person
                 w = right - left
@@ -120,6 +124,12 @@ while True:
                 center = (left + w / 2, top + h / 2)
 
                 brake_num = isin(center, cropAreaList)    # 判断中心点在哪个区域内
+                per_person_details = {}  # 每个人的详细信息
+                per_person_details["location"] = per_person    # 每个人的位置：上左下右
+                per_person_details["brake_num"] = brake_num    # 哪个闸机下
+                per_person_details["direct"] = direct          # 方向
+
+                person_details_list.append(per_person_details)    # 详细列表
 
                 if brake_num in personNumsDict.keys():
                     tmp_nums = personNumsDict[brake_num]
@@ -150,18 +160,40 @@ while True:
             if isShow:
                 cv2.imshow("img", result)
                 cv2.waitKey(1)
-            if isOutput: #  and len(taopiaoList) > 0:  # 只有存在逃票行为时才保存图片
-                save_path = os.path.join(evade_save_path, ipArr[i])
-                if os.path.exists(save_path) is False:
-                    os.makedirs(save_path)
-                savefile = os.path.join(save_path, str(count) + "-" + str(int(time.time())) + ".jpg")
-                cv2.imwrite(savefile, result)
+            if isOutput:    # 需要保存图片
+                if len(taopiaoList) > 0:  # 存在逃票行为
+                    save_path = os.path.join(evade_save_path, ipArr[i])
+                    if os.path.exists(save_path) is False:
+                        os.makedirs(save_path)
+                    savefile = os.path.join(save_path, str(count) + "-" + str(int(time.time())) + ".jpg")
+                    cv2.imwrite(savefile, result)
+                else:    # 正常的图片
+                    save_path = os.path.join(normal_save_path, ipArr[i])
+                    if os.path.exists(save_path) is False:
+                        os.makedirs(save_path)
+                    savefile = os.path.join(save_path, str(count) + "-" + str(int(time.time())) + ".jpg")
+                    cv2.imwrite(savefile, result)
+                detailInfo = {}
+                detailInfo["count"] = count
+                detailInfo["savefile"] = savefile
+                detailInfo["taopiaoList"] = taopiaoList
+                detailInfo["read_time"] = read_time
+                detailInfo["detect_time"] = str(time.time() - start)
+                detailInfo["final_total"] = final_total
+                detailInfo["personNumsDict"] = personNumsDict
+                detailInfo["person_details_list"] = person_details_list
 
-                log.logger.info("%s %s %s read: %s, detect: %s total: %d details: %s" % (
-                str(count), savefile, taopiaoList, str(read_time), str(time.time() - start), final_total, personNumsDict))
-            else:
-                log.logger.info("%s read: %s, detect: %s total: %d details: %s" % (str(count), str(read_time), str(time.time() - start), final_total, personNumsDict))
+                log.logger.info("%s" % (str(detailInfo)))
+            else:    # 不需要保存图片（只写日志）
+                detailInfo = {}
+                detailInfo["count"] = count
+                detailInfo["read_time"] = read_time
+                detailInfo["detect_time"] = str(time.time() - start)
+                detailInfo["final_total"] = final_total
+                detailInfo["personNumsDict"] = personNumsDict
+                detailInfo["person_details_list"] = person_details_list
 
+                log.logger.info("%s" % (str(detailInfo)))
             cap.release()
             cv2.destroyAllWindows()
         except Exception as e:
