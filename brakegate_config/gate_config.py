@@ -40,9 +40,9 @@ brakeCheckDict['10.6.8.222'] = [(430, 435, 795, 520), (1060, 525, 1450, 585), (1
 brakeDirectDict = {}
 brakeDirectDict["10.6.8.181"] = 0    # D口出站
 brakeDirectDict["10.6.8.191"] = 1    # D口进站
-brakeDirectDict["10.6.8.192"] = 0    # B口进站
-brakeDirectDict["10.6.8.201"] = 0    # B口出站
-brakeDirectDict["10.6.8.211"] = 1    # B口进站（B口，靠近车控室的那一排闸机）
+brakeDirectDict["10.6.8.192"] = 1    # B口进站
+brakeDirectDict["10.6.8.201"] = 1    # B口进站
+brakeDirectDict["10.6.8.211"] = 0    # B口出站（B口，靠近车控室的那一排闸机）
 brakeDirectDict["10.6.8.221"] = 0    # AE口出站
 brakeDirectDict["10.6.8.222"] = 1    # AE口进站
 
