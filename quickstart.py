@@ -7,6 +7,7 @@ import skimage.io
 import matplotlib
 import matplotlib.pyplot as plt
 import ipdb
+import time
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -79,8 +80,10 @@ class_names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
 # file_names = next(os.walk(IMAGE_DIR))[2]
 # image = skimage.io.imread(os.path.join(IMAGE_DIR, random.choice(file_names)))
 # image = skimage.io.imread("./input/10.6.8.201_01_20200417215459669.mp4_frame_0522.jpg")
-image = skimage.io.imread("D:/10.6.8.201_01_20200417215842195.mp4/10.6.8.201_01_20200417215842195.mp4_frame_0299.jpg")
+# image = skimage.io.imread("D:/10.6.8.201_01_20200417215842195.mp4/10.6.8.201_01_20200417215842195.mp4_frame_0299.jpg")
+image = skimage.io.imread("D:/testData/4.jpg")
 
+start = time.time()
 # Run detection
 results = model.detect([image], verbose=1)
 # print("results: ", results)
@@ -88,6 +91,7 @@ results = model.detect([image], verbose=1)
 # Visualize results
 r = results[0]
 
+print("spend time:", time.time() - start)
 for (rois, masks, class_ids, scores) in zip(r['rois'], r['masks'], r['class_ids'], r['scores']):
     print(rois, masks, class_ids, scores)
 
