@@ -55,7 +55,7 @@ def isin(center, cropAreaList):
         left, top, right, bottom = cropAreaList[i]    # 左上右下
         (targetx, targety) = center
 
-        if (targetx > left and targetx < right) and (targety > top and targety < bottom):
+        if (targetx >= left and targetx < right) and (targety >= top and targety < bottom):
             where_gate = i
     return str(where_gate)
 
