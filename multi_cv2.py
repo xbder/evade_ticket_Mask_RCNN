@@ -50,12 +50,14 @@ errorlog = Logger(os.path.join('./logs/error.log'), level='info')
     判断点在哪个矩形框内，返回点所在的框的序号
 '''
 def isin(center, cropAreaList):
+    where_gate = 0    # 默认处于0号闸机
     for i in range(len(cropAreaList)):
         left, top, right, bottom = cropAreaList[i]    # 左上右下
         (targetx, targety) = center
 
         if (targetx > left and targetx < right) and (targety > top and targety < bottom):
-            return str(i)
+            where_gate = i
+    return str(where_gate)
 
 count = 0
 personNumsDict = {}
